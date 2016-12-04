@@ -1,0 +1,188 @@
+! -----------------------------------------------------------------------
+! Standard Pascal Grammar
+! -----------------------------------------------------------------------
+
+
+"Name"    = 'Pascal' 
+"Version" = '1.0'
+"Author"  = 'Ibrahim Sharaf' 
+"About"   = 'PASCAL Compiler'
+
+"Case Sensitive" = False
+"Start Symbol"   = <Program>
+
+{Hex Digit}      = {Digit} + [abcdefABCDEF]
+
+{Id Head}        = {Letter} + [_]
+{Id Tail}        = {Id Head} + {Digit}
+
+{String Ch}      = {Printable} - ['']
+{Char Ch}        = {Printable} - ['']
+
+DecLiteral       = {digit}*
+HexLiteral       = '$'{Hex Digit}
+FloatLiteral     = {Digit}*'.'{Digit}+
+
+StringLiteral    = ''( {String Ch} | '\'{Printable} )* ''
+CharLiteral      = '' ( {Char Ch} | '\'{Printable} )''
+
+id               = {Id Head}{Id Tail}*
+
+<constant>         ::= DecLiteral
+                     | StringLiteral
+                     | FloatLiteral
+                     | HexLiteral
+                     | CharLiteral
+
+
+!=========================================== Program
+
+<Program> ::= <ProgramHeader> <Declarations> <CompoundStatement> '.'
+
+<ProgramHeader> ::= PROGRAM id ';'
+                  | PROGRAM id '(' <IdList> ')' ';'
+
+<Declarations> ::= <ConstantDefinitions> <TypeDefinitions> <VariableDeclarations> <ProcedureDeclarations>
+
+<ConstantDefinitions> ::= CONST <ConstantDefinitionList>
+                        |  
+
+<ConstantDefinitionList> ::= <ConstantDef>
+                           | <ConstantDef> <ConstantDefinitionList>
+
+<ConstantDef> ::= id '=' <constant> ';'
+
+<TypeDefinitions> ::= TYPE <TypeDefinitionList>
+                     |
+
+<TypeDefinitionList> ::= <TypeDef>
+                       | <TypeDef> <TypeDefinitionList>
+
+<TypeDef> ::= id '=' <TypeSpecifier> ';'
+
+<VariableDeclarations> ::= VAR <VariableDeclarationList>
+                        | 
+
+<VariableDeclarationList> ::= <VariableDec>
+                            | <VariableDec> <VariableDeclarationList>
+
+<VariableDec> ::= <IdList> ':' <TypeSpecifier> ';'
+
+<ProcedureDeclarations> ::= <ProcedureDec> <ProcedureDeclarations>
+                          | 
+
+<ProcedureDec> ::= <ProcedureHeader> FORWARD ';'
+                 | <ProcedureHeader> <Declarations> <CompoundStatement> ';'
+                 | <FunctionHeader> FORWARD ';'
+                 | <FunctionHeader> <Declarations> <CompoundStatement> ';'
+
+<ProcedureHeader> ::= PROCEDURE id <Arguments> ';'
+
+<FunctionHeader> ::= FUNCTION id <Arguments> ':' <TypeSpecifier> ';'
+
+<Arguments> ::= '(' <ArgumentList> ')'
+              | 
+
+<ArgumentList> ::= <Arg>
+                 | <Arg> ';' <ArgumentList>
+
+<Arg> ::= <IdList> ':' <TypeSpecifier>
+        | VAR <IdList> ':' <TypeSpecifier>
+
+<CompoundStatement> ::= BEGIN <StatementList> END
+
+<StatementList> ::= <Statement>
+                  | <Statement> ';' <StatementList>
+
+<Statement> ::= <CompoundStatement>
+              | <AssignmentStatement>
+              | <ProcedureCall>
+              | <ForStatement>
+              | <WhileStatement>
+              | <IfStatement>
+              | <CaseStatement>
+              | <RepeatStatement>
+              | 
+
+<AssignmentStatement> ::= <Variable> ':=' <Expression>
+
+<ProcedureCall> ::= id <Actuals>
+
+<ForStatement> ::= FOR id ':=' <Expression> TO <Expression> DO <Statement>
+                 | FOR id ':=' <Expression> DOWNTO <Expression> DO <Statement>
+
+<WhileStatement> ::= WHILE <Expression> DO <Statement>
+
+<IfStatement> ::= IF <Expression> THEN <Statement> ELSE <Statement>
+
+<RepeatStatement> ::= REPEAT <StatementList> UNTIL <Expression>
+
+<CaseStatement> ::= CASE <Expression> OF <CaseList> END
+
+<CaseList> ::= <Case>
+             | <Case> ';' <CaseList>
+
+<Case> ::= <ConstantList> ':' <Statement>
+
+<ConstantList> ::= <constant>
+                 | <constant> ',' <ConstantList>
+
+<Expression> ::= <SimpleExpression>
+               | <SimpleExpression> '=' <SimpleExpression>
+               | <SimpleExpression> '<>' <SimpleExpression>
+               | <SimpleExpression> '<' <SimpleExpression>
+               | <SimpleExpression> '<=' <SimpleExpression>
+               | <SimpleExpression> '>' <SimpleExpression>
+               | <SimpleExpression> '>=' <SimpleExpression>
+
+<SimpleExpression> ::= <Term>
+                    | <SimpleExpression> '+' <Term>
+                    | <SimpleExpression> '-' <Term>
+                    | <SimpleExpression> OR <Term>
+
+<Term> ::= <Factor>
+         | <Term> '*' <Factor>
+         | <Term> '/' <Factor>
+         | <Term> 'DIV' <Factor>
+         | <Term> 'MOD' <Factor>
+         | <Term> 'AND' <Factor>
+
+<Factor> ::= '(' <Expression> ')'
+           | '+' <Factor>
+           | '-' <Factor>
+           | NOT <Factor>
+           | <constant>
+           | <Variable>
+
+<Actuals> ::= '(' <ExpressionList> ')'
+            | 
+
+<ExpressionList> ::= <Expression>
+                   | <Expression> ',' <ExpressionList>
+
+<Variable> ::= id
+             | <Variable> '.' id
+             | <Variable> '^'
+             | <Variable> '[' <ExpressionList> ']'
+
+<TypeSpecifier> ::= id
+                  | '^' <TypeSpecifier>
+                  | '(' <IdList> ')'
+                  | <constant> '..' <constant>
+                  | ARRAY '[' <DimensionList> ']' OF <TypeSpecifier>
+                  | RECORD <FieldList> END
+                  | FILE OF <TypeSpecifier>
+
+<DimensionList> ::= <Dimension>
+                  | <Dimension> ',' <DimensionList>
+
+<Dimension> ::= <constant> '..' <constant>
+              | id
+
+<FieldList> ::= <Field>
+              | <Field> ';' <FieldList>
+
+<Field> ::= <IdList> ':' <TypeSpecifier>
+
+<IdList> ::= id
+           | id ',' <IdList>

@@ -1,0 +1,9 @@
+c:\users\qudsgroup\documents\visual studio 2015\Projects\COMP\COMP\bin\Debug\COMP.exe.config
+c:\users\qudsgroup\documents\visual studio 2015\Projects\COMP\COMP\bin\Debug\COMP.exe
+c:\users\qudsgroup\documents\visual studio 2015\Projects\COMP\COMP\bin\Debug\COMP.pdb
+c:\users\qudsgroup\documents\visual studio 2015\Projects\COMP\COMP\obj\Debug\COMP.csprojResolveAssemblyReference.cache
+c:\users\qudsgroup\documents\visual studio 2015\Projects\COMP\COMP\obj\Debug\COMP.Form1.resources
+c:\users\qudsgroup\documents\visual studio 2015\Projects\COMP\COMP\obj\Debug\COMP.Properties.Resources.resources
+c:\users\qudsgroup\documents\visual studio 2015\Projects\COMP\COMP\obj\Debug\COMP.csproj.GenerateResource.Cache
+c:\users\qudsgroup\documents\visual studio 2015\Projects\COMP\COMP\obj\Debug\COMP.exe
+c:\users\qudsgroup\documents\visual studio 2015\Projects\COMP\COMP\obj\Debug\COMP.pdb

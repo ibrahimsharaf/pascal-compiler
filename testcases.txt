@@ -1,0 +1,58 @@
+program area;
+{* it is program to calculate the area of 
+Square or rectangle based on the values of user*}
+var
+	width, height :integer ;
+	area : real;
+	answer : char ;
+begin
+repeat
+writeln('Please enter  two values');
+readln(width);
+readln(height);
+if width = height then
+   writeln('the area of square');
+
+else
+   writeln('the area of rectangle');
+area:= width* height;
+writeln(area);
+writeln('do  you want to continue?  enter y or n');
+readln(answer);
+until  answer = y;
+writeln('Finished');
+end.
+
+
+
+Program sum;
+{write program to sum from I to n}
+Var
+	N,sum, end :integer;
+Begin
+Sum:=0;
+Writeln('enter  the end value');
+Readln(end)
+for N:=1 to end do
+  sum:= sum+ N;
+writeln('the sum is equal to');
+writeln(sum);
+End.
+
+
+
+program factorial;
+{ it is program to calculate factorial}
+var
+	n, fact: integer ;
+fact:= 1;
+writeln('Please enter  the number');
+readln(n);
+begin
+repeat
+   	fact:= fact *n;
+	n := n- 1;
+until n = 1;
+writeln('the value of you factorial');
+write(fact);
+end.
