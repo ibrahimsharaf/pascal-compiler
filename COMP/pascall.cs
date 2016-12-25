@@ -1,9 +1,11 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Runtime.Serialization;
 using com.calitha.goldparser.lalr;
 using com.calitha.commons;
 using System.Windows.Forms;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace com.calitha.goldparser
 {
@@ -274,6 +276,27 @@ namespace com.calitha.goldparser
     {
         private LALRParser parser;
         ListBox lstErrors;
+        List<string> reserved_words_const = new List<string>(new string[] { "uses", "var", "function", "procedure" });
+        List<string> reserved_words_var = new List<string>(new string[] { "function", "procedure", "begin", "end" });
+        List<string> keywords = new List<string>(new string[]
+        {
+            "and","div","file","in","of","record","array","do",
+            "for","label","or","repeat","until","begin","downto","else",
+            "function","mod","packed","set","var","case","goto","nil",
+            "procedure","then","while","const","end","if","not","program"
+            ,"read", "write", "readln", "writeln","to","with",
+             "(",")","+","-","{","}","/","*",",",";", "=", ":=", ":", "."  });
+        Dictionary<string, string> mapping = new Dictionary<string, string>();
+        int const_flag = 0; //to detect const keyword
+        int var_flag = 0; //to detect var keyword
+        int assginment_flag = 0;
+        int colon_flag = 0;
+        string last_token = ""; //to track PROGRAM keyword 
+        List<string> constants = new List<string>(); //to store constants
+        List<string> vars = new List<string>(); //to store vars
+        List<string> words = new List<string>(); //keep track of words for constants
+        List<string> allwords = new List<string>(); //keep track of all words
+       
         public MyParser(string filename, ListBox lstErrors)
         {
             FileStream stream = new FileStream(filename,
@@ -307,7 +330,7 @@ namespace com.calitha.goldparser
             parser = reader.CreateNewParser();
             parser.TrimReductions = false;
             parser.StoreTokens = LALRParser.StoreTokensMode.NoUserObject;
-
+            parser.OnShift += new LALRParser.ShiftHandler(ShiftEvent);
             parser.OnReduce += new LALRParser.ReduceHandler(ReduceEvent);
             parser.OnTokenRead += new LALRParser.TokenReadHandler(TokenReadEvent);
             parser.OnAccept += new LALRParser.AcceptHandler(AcceptEvent);
@@ -1460,6 +1483,199 @@ namespace com.calitha.goldparser
             //todo: Report message to UI?
         }
 
+        private void ShiftEvent(LALRParser parser, ShiftEventArgs args)
+        {
+           /*
+           rule: Cannot reassign Constants
+           rule logic :-
+               - if const keyword found, turn const_flag on
+               - find the first identifier
+               - push the string in the constants list
+               - if you find semi colon, start with new identifer
+               - keep repeating till you find another keyword
+           */
+            if (args.Token.Text.ToLower() == "const")
+            {
+                const_flag = 1;
+                //return;
+            }
+            else if (reserved_words_const.Contains(args.Token.Text.ToLower()))
+            {
+                const_flag = 0;
+                //return;
+            }
 
+            if (const_flag == 1)
+            {
+                // PI = 3.14;
+                if (args.Token.Text == "=")
+                {
+                    //lstErrors.Items.Add("equal found");
+                    assginment_flag = 1;
+                }
+                else if (args.Token.Text == ";")
+                {
+                    //lstErrors.Items.Add("semicolon found");
+                    assginment_flag = 0;
+                }
+
+                else if(keywords.Contains(args.Token.Text.ToLower()) == false)
+                {
+                    if (assginment_flag == 0)
+                    {
+                        if (constants.Contains(args.Token.Text.ToLower()))
+                        {
+                            string message = "Semantic error (constant reassignment) caused by token: " + args.Token.Text;
+                            lstErrors.Items.Add(message);
+                        }
+                        else
+                            constants.Add(args.Token.Text.ToLower());
+                    }
+
+                    //else
+                    // numeric value of constant
+                    // do nothing
+                }
+            }
+            else
+            {
+                //if trying to reassign a constant variable -> raise error 
+                if (args.Token.Text == ":=")
+                {
+                    for (int i = 0; i < constants.Count; i++)
+                    {
+                        if (constants[i] == words[words.Count - 1] && words.Count - 1 >= 0)
+                        {
+                            string message = "Semantic error (constant reassignment) caused by token: " + words[words.Count - 1];
+                            lstErrors.Items.Add(message);
+                        }
+                    }
+                }
+                words.Add(args.Token.Text.ToLower());
+            }
+
+            //------------------------------------------------------//
+           /*
+           rule: Cannot use variables without declaration
+           rule logic :-
+              - Get all variables in the vars list
+              - Check for undeclared variables (not keywords)
+           */
+            if (args.Token.Text.ToLower() == "var")
+            {
+                var_flag = 1;
+            }
+            else if (reserved_words_var.Contains(args.Token.Text.ToLower()))
+            {
+                var_flag = 0;
+
+            }
+
+            if (var_flag == 1)
+            {
+                //update mapping
+                if(last_token == ":")
+                {
+                    for(int i = allwords.Count-1; i>=0; i--)
+                    {
+                        if (allwords[i] == "var" || allwords[i] == ";")
+                            break;
+                        else
+                            mapping[allwords[i]] = args.Token.Text.ToLower();
+                    }    
+                }
+                // width, height : Integer;
+                if (args.Token.Text == ":")
+                {
+                    //lstErrors.Items.Add("colon found");
+                    colon_flag = 1;
+                }
+                else if (args.Token.Text == ";")
+                {
+                    //lstErrors.Items.Add("semicolon found");
+                    colon_flag = 0;
+                }
+
+                else
+                {
+                    if (colon_flag == 0 && args.Token.Text != ",")
+                        vars.Add(args.Token.Text.ToLower());
+                    //else
+                    // variables datatype
+                    // do nothing
+                }
+            }
+            //not var_flag
+            else
+            {
+                string candidate = args.Token.Text;
+                int num;
+                bool check = int.TryParse(candidate, out num);
+
+
+                //undeclared variable
+                if (keywords.Contains(args.Token.Text.ToLower()) == false && vars.Contains(args.Token.Text.ToLower()) == false &&
+                    constants.Contains(args.Token.Text.ToLower()) == false && check==false && (candidate[0].ToString() != "'") &&
+                    last_token.ToLower() != "program")
+                { 
+                        string message = "Semantic error (undeclared variable) caused by token: " + args.Token.Text;
+                        lstErrors.Items.Add(message);
+                }
+                else
+                {
+                    //to check type mismatch
+                    try
+                    {
+                        if (last_token == ":=")
+                        {
+                            int numm;
+                            bool value_type = int.TryParse(args.Token.Text, out numm);
+                            string type = mapping[allwords[allwords.Count - 2]];
+
+                            //string = int
+                            if (value_type == true)
+                            {
+                                string message = "semantic error (type mismatch) caused by token: " + args.Token.Text;
+                                lstErrors.Items.Add(message);
+                            }
+                            else if (value_type == false && type == "integer")
+                            {
+                                string message = "semantic error (type mismatch) caused by token: " + args.Token.Text;
+                                lstErrors.Items.Add(message);
+                            }
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                }
+            }
+            //--------------------------------------------------------//
+            /*
+            rule: Cannot assign string to integer and vice versa
+            rule logic :-
+                - Map variables to its datatypes
+                - If you find (variable = value)
+                - check on variable type from map, raise error if value is not compitable
+            */
+             //check rule 3
+
+            last_token = args.Token.Text;
+            //Don't take , : into consideration for mapping
+            if (last_token != "," && last_token !=":")
+                allwords.Add(last_token);
+
+            //Check Mapping
+            /*foreach (KeyValuePair<string, string> entry in mapping)
+            {
+                // do something with entry.Value or entry.Key
+                string ms1 = entry.Key;
+                string ms2 = entry.Value;
+                string ms = ms1 + " " + ms2;
+                lstErrors.Items.Add(ms);
+            }*/
+
+        }
     }
 }
