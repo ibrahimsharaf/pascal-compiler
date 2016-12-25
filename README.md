@@ -1,2 +1,5 @@
 #Pascal-Compiler
-A simple scanner and parser for Pascal programming language built using gold parser, linked with c# application for code testing.
+- A simple Pascal Compiler built using gold parser and C#
+- Stages finished:
+    1) Lexical Analysis 
+    2) Semantic Analysis
